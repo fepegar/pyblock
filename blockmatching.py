@@ -3,8 +3,10 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from volume import Volume
+from variogram import compute_variogram
 
 BINS = 32
+
 
 class Blockmatching:
     def __init__(self, ref_path, flo_path):
@@ -137,7 +139,25 @@ if __name__ == "__main__":
     for _ in range(3):
         b.downsample()
     flo_centers, ref_centers, ccs, stds = b.get_displacements()
+    flo_centers = flo_centers[::2]
+    ref_centers = ref_centers[::2]
     # plt.hist(stds, 50)
     # plt.show()
     displacements = ref_centers - flo_centers
-    b.plot_displacements(flo_centers, displacements, color=ccs)
+    # b.plot_displacements(flo_centers, displacements, color=ccs)
+    h, dz = compute_variogram(flo_centers, displacements)
+
+    x = []
+    y = []
+    for i in range(int(np.floor(h.max()))):  # 0 - 34
+        bin_min = i + 0.5
+        bin_max = bin_min + 1
+        idx, = np.where((bin_min <= h) & (h < bin_max))
+        bin_middle = np.mean((bin_min, bin_max))
+        mean = dz[idx].mean()
+        x.append(bin_middle)
+        y.append(mean)
+
+    # plt.scatter(h, dz + np.random.rand(dz.size).reshape(dz.shape) - 0.5, 3, alpha=0.25)
+    plt.scatter(x, y)
+    plt.show()
